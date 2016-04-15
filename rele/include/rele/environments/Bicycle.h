@@ -57,9 +57,8 @@ public:
 protected:
     bool isAtGoal();
 
-    double vector_angle(mat u, mat v);
+    double vector_angle(vec u, vec v);
 
-    double const reward_fall=-1.o;
     double const reward_fall = -1.0;
     double const reward_goal = 0.01;
     double const goal_rsqrd = 1000.0;
@@ -96,7 +95,7 @@ protected:
 
     double x_f = 0, y_f = 0, x_b = 0, y_b = 0, psi = 0;
 
-    double** state_range = {{-M_PI * 12.0/180.0, M_PI * 12.0/180.0},
+    mat state_range = {{-M_PI * 12.0/180.0, M_PI * 12.0/180.0},
                             {-M_PI * 2.0/180.0, M_PI * 2.0/180.0},
                             {-M_PI, M_PI},
                             {-M_PI * 80.0/180.0, M_PI * 80.0/180.0},

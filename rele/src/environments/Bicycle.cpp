@@ -56,12 +56,13 @@ void Bicycle::step(const FiniteAction& action,
         else{
         	r_f = l / abs(sin(currentState[theta]));
             r_b = l / abs(tan(currentState[theta]));
-            r_CM = sqrt((l - c)^2 + (l^2 / tan(currentState[theta])^2));
+            r_CM = sqrt(pow((l - c),2) + (l*l / pow(tan(currentState[theta]),2)));
         }
         double varphi = currentState[omega] + atan(d / h);
+
         currentState[omega_ddot] = h * M * gravity * sin(varphi);
 
-        currentState[omega_ddot] -= cos(varphi) * (Inertia_dv * sigma_dot * currentState[theta_dot] + copysign(1.0,currentState[theta])*v^2*(M_d * r *(1.0/r_f + 1.0/r_b) + M*h/r_CM));
+        currentState[omega_ddot] -= cos(varphi) * (Inertia_dv * sigma_dot * currentState[theta_dot] + copysign(1.0,currentState[theta])*v*v*(M_d * r *(1.0/r_f + 1.0/r_b) + M*h/r_CM));
         currentState[omega_ddot] /= Inertia_bc;
 
         double theta_ddot = (T - Inertia_dv * sigma_dot * currentState[omega_dot]) / Inertia_dl;
@@ -74,10 +75,10 @@ void Bicycle::step(const FiniteAction& action,
 
         //Handle bar limits (80 deg.)
 
-        if(currentState[theta]<state_range[3][0])
-            currentState[theta] = state_range[3][0];
-        if(currentState[theta]<state_range[3][1])
-            currentState[theta] = state_range[3][1];
+        if(currentState[theta]<state_range[3,0])
+            currentState[theta] = state_range[3,0];
+        if(currentState[theta]<state_range[3,1])
+            currentState[theta] = state_range[3,1];
 
         // Update position (x,y) of tires
         double front_term = psi + currentState[theta] + copysign(1.0,psi + currentState[theta])* asin(v * df / (2.*r_f));
@@ -88,7 +89,7 @@ void Bicycle::step(const FiniteAction& action,
         y_b += cos(back_term);
 
         // Handle Roundoff errors, to keep the length of the bicycle constant
-        double dist = sqrt((x_f-x_b)^2 + (y_f-y_b)^2);
+        double dist = sqrt((x_f-x_b)*(x_f-x_b)+ (y_f-y_b)*(y_f-y_b));
         if (abs(dist - l) > 0.01){
             x_b += (x_b - x_f) * (l - dist)/dist;
             y_b += (y_b - y_f) * (l - dist)/dist;
@@ -106,20 +107,20 @@ void Bicycle::step(const FiniteAction& action,
 
     nextState = currentState;
 
-    if(abs(currentState[omega]) > state_range[0][1]){ // Bicycle fell over
+    if(abs(currentState[omega]) > state_range[0,1]){ // Bicycle fell over
                 //return -1.0, True
-    	reward = -1.0;
+    	reward = {-1.0};
     	currentState.setAbsorbing();
     }else if(isAtGoal()){
-    	reward = reward_goal;
+    	reward = {reward_goal};
 		currentState.setAbsorbing();
     }else if (!navigate)
-        reward = reward_shaping;
+        reward = {reward_shaping};
     else{
     	mat g_l = Row<double>({goal_loc_x,goal_loc_y});
     	mat x = Row<double>({x_f-x_b, y_f-y_b});
     	double goal_angle = vector_angle(g_l, x) * M_PI / 180.0;
-        reward = (4.0 - goal_angle^2) * reward_shaping;
+        reward = {(4.0 - goal_angle*goal_angle) * reward_shaping};
     }
 
 }
@@ -127,15 +128,16 @@ void Bicycle::step(const FiniteAction& action,
 
 bool Bicycle::isAtGoal(){
         // Anywhere in the goal radius
-	    double dist = (x_f - goal_loc_x)^2 + (y_f - goal_loc_y)^2;
+	    double dist = pow((x_f - goal_loc_x),2) + pow((y_f - goal_loc_y),2);
         if(navigate)
         	return (sqrt(max(0.0,(dist - goal_rsqrd))) < 0.00001);
         else
         	return false;
 }
 
-double Bicycle::vector_angle(mat u, mat v){
-    return acos(u * v.t())/(norm(u)*norm(v.t()))*180.0/M_PI;
+double Bicycle::vector_angle(vec u, vec v){
+	double x =acos(dot(u.t(),  v));
+    return x/(norm(u)*norm(v))*180.0/M_PI;
 }
 
 void Bicycle::getInitialState(DenseState& state){
