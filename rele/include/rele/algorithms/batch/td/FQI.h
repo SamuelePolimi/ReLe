@@ -24,200 +24,90 @@
 #ifndef INCLUDE_RELE_ALGORITHMS_BATCH_FQI_H_
 #define INCLUDE_RELE_ALGORITHMS_BATCH_FQI_H_
 
-#include "rele/core/BatchAgent.h"
+#include "rele/algorithms/batch/td/BatchTDAgent.h"
 
 namespace ReLe
 {
-/*
- * Fitted Q-Iteration (FQI)
- *
- * "Tree-Based Batch Mode Reinforcement Learning"
- * Damien Ernst, Pierre Geurts, Louis Wehenkel
- * Journal of Machine Learning Research, 6, 2006, pp. 503-556.
- */
 
+/*!
+ * This class implements the output data for all Fitted Q-Iteration algorithms.
+ * All version of Fitted Q-Iteration algorithms should use, or extend this class
+ */
 class FQIOutput : virtual public AgentOutputData
 {
 public:
-    FQIOutput(bool isFinal, double gamma, const arma::mat& Q) :
-        AgentOutputData(isFinal),
-        gamma(gamma),
-        Q(Q)
-    {
-    }
+    /*!
+     * Constructor.
+     * \param isFinal whether the data logged comes from the end of a run of the algorithm
+     * \param gamma the discount factor
+     * \param QRegressor the regressor
+     */
+    FQIOutput(bool isFinal, double gamma, BatchRegressor& QRegressor);
 
-    virtual void writeData(std::ostream& os) override
-    {
-        os << "- Parameters" << std::endl;
-        os << "gamma: " << gamma << std::endl;
-
-        os << "- Policy" << std::endl;
-        for(unsigned int i = 0; i < Q.n_rows; i++)
-        {
-            arma::uword policy;
-            Q.row(i).max(policy);
-            os << "policy(" << i << ") = " << policy << std::endl;
-        }
-    }
-
-    virtual void writeDecoratedData(std::ostream& os) override
-    {
-        os << "- Parameters" << std::endl;
-        os << "gamma: " << gamma << std::endl;
-
-        os << "- Action-value function" << std::endl;
-        for(unsigned int i = 0; i < Q.n_rows; i++)
-            for(unsigned int j = 0; j < Q.n_cols; j++)
-            {
-                os << "Q(" << i << ", " << j << ") = " << Q(i, j) << std::endl;
-            }
-
-        os << "- Policy" << std::endl;
-        for(unsigned int i = 0; i < Q.n_rows; i++)
-        {
-            arma::uword policy;
-            Q.row(i).max(policy);
-            os << "policy(" << i << ") = " << policy << std::endl;
-        }
-    }
+    virtual void writeData(std::ostream& os) override;
+    virtual void writeDecoratedData(std::ostream& os) override;
 
 protected:
     double gamma;
-    arma::mat Q;
+    BatchRegressor& QRegressor;
 };
 
-template<class StateC>
-class FQI : public BatchAgent<FiniteAction, StateC>
+/*!
+ * This class implements the Fitted Q-Iteration algorithm.
+ * This algorithm is an off-policy batch algorithm that works with finite
+ * action spaces.
+ * It exploits the Bellman operator to build a dataset of Q-values from which
+ * a regressor is trained.
+ *
+ * References
+ * ==========
+ *
+ * [Ernst, Geurts, Wehenkel. Tree-Based Batch Mode Reinforcement Learning](http://www.jmlr.org/papers/volume6/ernst05a/ernst05a.pdf)
+ */
+class FQI : public BatchTDAgent<DenseState>
 {
 public:
+    /*!
+     * Constructor.
+     * \param QRegressor the regressor
+     * \param nStates the number of states
+     * \param nActions the number of actions
+     * \param epsilon coefficient used to check whether to stop the training
+     */
+    FQI(BatchRegressor& QRegressor, unsigned int nActions, double epsilon);
 
-    FQI(BatchRegressor& QRegressor, unsigned int nStates, unsigned int nActions,
-        double epsilon) :
-        QRegressor(QRegressor),
-        nStates(nStates),
-        nActions(nActions),
-        QTable(arma::mat(nStates, nActions, arma::fill::zeros)),
-        nSamples(0),
-        firstStep(true),
-        epsilon(epsilon)
-    {
-    }
+    virtual void init(Dataset<FiniteAction, DenseState>& data, EnvironmentSettings& envSettings) override;
+    virtual void step() override;
 
-    virtual void init(Dataset<FiniteAction, StateC>& data, double gamma) override
-    {
-        this->gamma = gamma;
-        features = data.featuresAsMatrix(QRegressor.getFeatures());
-        nSamples = features.n_cols;
-        states = arma::vec(nSamples, arma::fill::zeros);
-        actions = arma::vec(nSamples, arma::fill::zeros);
-        nextStates = arma::vec(nSamples, arma::fill::zeros);
-        rewards = arma::vec(nSamples, arma::fill::zeros);
-        QHat = arma::vec(nSamples, arma::fill::zeros);
+    /*!
+     * Check whether the stop condition is satisfied.
+     */
+    virtual void checkCond();
 
-        unsigned int i = 0;
-        for(auto& episode : data)
-            for(auto& tr : episode)
-            {
-                if(tr.xn.isAbsorbing())
-                    absorbingStates.insert(tr.xn);
-
-                states(i) = tr.x;
-                actions(i) = tr.u;
-                nextStates(i) = tr.xn;
-                rewards(i) = tr.r[0];
-                i++;
-            }
-    }
-
-    virtual void step() override
-    {
-        arma::mat outputs(1, nSamples, arma::fill::zeros);
-
-        for(unsigned int i = 0; i < nSamples; i++)
-        {
-            arma::vec Q_xn(nActions, arma::fill::zeros);
-            FiniteState nextState = FiniteState(nextStates(i));
-            if(absorbingStates.count(nextState) == 0 && !firstStep)
-                for(unsigned int u = 0; u < nActions; u++)
-                    Q_xn(u) = arma::as_scalar(QRegressor(nextState,
-                                                         FiniteAction(u)));
-
-            outputs(i) = rewards(i) + this->gamma * arma::max(Q_xn);
-        }
-
-        BatchDataSimple featureDataset(features, outputs);
-        QRegressor.trainFeatures(featureDataset);
-
-        firstStep = false;
-
-        checkCond();
-    }
-
-    virtual void checkCond()
-    {
-        arma::vec prevQHat = QHat;
-
-        computeQHat();
-
-        if(arma::norm(QHat - prevQHat) < epsilon)
-            this->converged = true;
-    }
-
-    virtual void computeQHat()
-    {
-        for(unsigned int i = 0; i < states.n_elem; i++)
-            QHat(i) = arma::as_scalar(QRegressor(FiniteState(states(i)), FiniteAction(actions(i))));
-    }
-
-    virtual void computeQTable()
-    {
-        for(unsigned int i = 0; i < nStates; i++)
-            for(unsigned int j = 0; j < nActions; j++)
-                QTable(i, j) = arma::as_scalar(QRegressor(FiniteState(i), FiniteAction(j)));
-    }
+    /*!
+     * Compute the Q-values approximation for each element in the dataset.
+     */
+    virtual void computeQHat();
 
     inline virtual AgentOutputData* getAgentOutputData() override
     {
-        computeQTable();
-        return new FQIOutput(false, this->gamma, QTable);
+        return new FQIOutput(false, this->gamma, this->QRegressor);
     }
 
     inline virtual AgentOutputData* getAgentOutputDataEnd() override
     {
-        computeQTable();
-        return new FQIOutput(true, this->gamma, QTable);
-    }
-
-    arma::mat& getQ()
-    {
-        computeQTable();
-
-        return QTable;
-    }
-
-    virtual Policy<FiniteAction, StateC>* getPolicy() override
-    {
-        // FIXME
-        return nullptr;
-    }
-
-    virtual ~FQI()
-    {
+        return new FQIOutput(true, this->gamma, this->QRegressor);
     }
 
 protected:
     arma::vec QHat;
-    arma::mat QTable;
     arma::mat features;
-    arma::vec states;
+    arma::mat states;
     arma::vec actions;
-    arma::vec nextStates;
+    arma::mat nextStates;
     arma::vec rewards;
-    BatchRegressor& QRegressor;
     unsigned int nSamples;
-    unsigned int nStates;
-    unsigned int nActions;
-    std::set<FiniteState> absorbingStates;
+    std::set<unsigned int> absorbingStates;
     double epsilon;
     bool firstStep;
 };

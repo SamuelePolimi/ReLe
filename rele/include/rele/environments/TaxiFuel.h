@@ -30,15 +30,36 @@ namespace ReLe
 #ifndef INCLUDE_RELE_ENVIRONMENTS_TAXIFUEL_H_
 #define INCLUDE_RELE_ENVIRONMENTS_TAXIFUEL_H_
 
-
-//TODO not really a dense MDP...
+/*!
+ * This class implements the Taxi Fuel problem.
+ * The aim of this problem is to find an optimal
+ * policy for a taxi cab in order to let it be able
+ * to transport passengers in the desired locations
+ * without running out of fuel.
+ *
+ * References
+ * ==========
+ * [Dietterich. Hierarchical Reinforcement Learning with the MAXQ Value Function Decomposition. JAIR](https://www.jair.org/media/639/live-639-1834-jair.pdf)
+ */
+//TODO [INTERFACE] not really a dense MDP...
 class TaxiFuel: public DenseMDP
 {
 
 public:
+    /*!
+     * Constructor.
+     */
     TaxiFuel();
+
+    /*!
+     * \see Environment::step
+     */
     virtual void step(const FiniteAction& action, DenseState& nextState,
                       Reward& reward) override;
+
+    /*!
+     * \see Environment::getInitialState
+     */
     virtual void getInitialState(DenseState& state) override;
 
     enum StateComponents
@@ -73,6 +94,11 @@ public:
         ACTIONNUMBER
     };
 
+    /*!
+     * Return the position of the special locations
+     * of the problem.
+     * \return vector of positions
+     */
     inline std::vector<arma::vec2> getLocations()
     {
         std::vector<arma::vec2> locations;

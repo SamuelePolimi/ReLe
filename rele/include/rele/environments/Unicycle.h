@@ -32,11 +32,24 @@
 namespace ReLe
 {
 
+/*!
+ * This class contains the settings of the Unicycle problem
+ * and some functions to manage them.
+ */
 class UnicyclePolarSettings : public EnvironmentSettings
 {
 public:
+    /*!
+     * Constructor.
+     */
     UnicyclePolarSettings();
+
+    /*!
+     * Default settings initialization
+     * \param settings the default settings
+     */
     static void defaultSettings(UnicyclePolarSettings& settings);
+
     virtual ~UnicyclePolarSettings();
 
 public:
@@ -47,24 +60,44 @@ public:
     virtual void ReadFromStream(std::istream& in);
 };
 
-/**
- * References:
- * http://www.diva-portal.se/smash/get/diva2:662268/FULLTEXT01.pdf
- * http://cdn.intechopen.com/pdfs-wm/44029.pdf
+/*!
+ * This class implements the Unicycle problem.
+ * The aim of this problem is to control a unicycle
+ * in order to let it stay balanced.
  *
+ * \f[
  * \hat{e}(t) = [x(t) - x_g; y(t) - y_g; \theta(t) - \theta_g]^{T}
+ * \f]
+ * \f[
  * e(t) = \begin{bmatrix} e_x(t)\\e_y(t)\\ e_\theta(t)\end{bmatrix}
  *      = \begin{bmatrix}  cos\theta_g & sin\theta_g & 0\\
  *                        -sin\theta_g & cos\theta_g & 0\\
  *                         0 & 0 & 1
  *        \end{bmatrix} \hat{e}(t)
+ * \f]
+ * \f[
  * \rho   = \sqrt(e_x^2+e_y^2)
+ * \f]
+ * \f[
  * \gamma = atan2(e_y,e_x) - e_\theta + \pi
+ * \f]
+ * \f[
  * \delta = \gamma + e_\theta
+ * \f]
  *
  * Optimal control law:
+ * \f[
  * v = k_1 \rho cos\gamma
- * w = k_2 \gamma + k_1 sin\gamma cos\gamma (gamma + k_3 \delta) / gamma
+ * \f]
+ * \f[
+ * w = k_2 \gamma + k_1 \sin\gamma \cos\gamma (\gamma + k_3 \delta) / \gamma
+ * \f]
+ *
+ * References
+ * ==========
+ * [Master Thesis](http://www.diva-portal.se/smash/get/diva2:662268/FULLTEXT01.pdf)
+ *
+ * [Stabilized Feedback Control of Unicycle Mobile Robots](http://cdn.intechopen.com/pdfs-wm/44029.pdf)
  */
 class UnicyclePolar: public ContinuousMDP
 {
@@ -96,8 +129,15 @@ private:
     };
 
 public:
-
+    /*!
+     * Constructor.
+     */
     UnicyclePolar();
+
+    /*!
+     * Constructor.
+     * \param config the initial settings
+     */
     UnicyclePolar(UnicyclePolarSettings& config);
 
     virtual ~UnicyclePolar()
@@ -106,10 +146,20 @@ public:
             delete unicycleConfig;
     }
 
+    /*!
+     * \see Environment::step
+     */
     virtual void step(const DenseAction& action, DenseState& nextState,
                       Reward& reward) override;
+
+    /*!
+     * \see Environment::getInitialState
+     */
     virtual void getInitialState(DenseState& state) override;
 
+    /*!
+     * \see Environment::getSettings
+     */
     inline const UnicyclePolarSettings& getSettings() const
     {
         return *unicycleConfig;

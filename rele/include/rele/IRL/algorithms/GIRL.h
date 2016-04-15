@@ -24,25 +24,25 @@
 #ifndef GIRL_H_
 #define GIRL_H_
 
-#include "rele/IRL/algorithms/LinearIRLAlgorithm.h"
+#include "rele/IRL/utils/StepBasedGradientCalculatorFactory.h"
+#include "rele/IRL/algorithms/StepBasedLinearIRLAlgorithm.h"
 
-#include "rele/IRL/utils/GradientCalculatorFactory.h"
 
 namespace ReLe
 {
 
 template<class ActionC, class StateC>
-class GIRL: public LinearIRLAlgorithm<ActionC, StateC>
+class GIRL: public StepBasedLinearIRLAlgorithm<ActionC, StateC>
 {
 public:
 
     GIRL(Dataset<ActionC, StateC>& dataset,
          DifferentiablePolicy<ActionC, StateC>& policy,
          LinearApproximator& rewardf, double gamma, IrlGrad aType) :
-        LinearIRLAlgorithm<ActionC, StateC>(dataset, policy, rewardf, gamma), aType(aType)
+        StepBasedLinearIRLAlgorithm<ActionC, StateC>(dataset, rewardf, gamma), policy(policy), aType(aType)
     {
         // build gradient calculator
-        gradientCalculator = GradientCalculatorFactory<ActionC, StateC>::build(aType, rewardf.getFeatures(),
+        gradientCalculator = StepBasedGradientCalculatorFactory<ActionC, StateC>::build(aType, rewardf.getFeatures(),
                              dataset, policy, gamma);
     }
 
@@ -85,7 +85,7 @@ public:
 
 protected:
     IrlGrad aType;
-
+    DifferentiablePolicy<ActionC, StateC>& policy;
     GradientCalculator<ActionC, StateC>* gradientCalculator;
 };
 

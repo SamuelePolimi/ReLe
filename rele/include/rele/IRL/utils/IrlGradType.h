@@ -39,11 +39,21 @@ enum class IrlGrad
     NATURAL_GPOMDP, NATURAL_GPOMDP_BASELINE
 };
 
+enum class IrlEpGrad
+{
+    PGPE, PGPE_BASELINE
+};
+
 enum class IrlHess
 {
     REINFORCE, REINFORCE_BASELINE,
     REINFORCE_BASELINE_TRACE, REINFORCE_BASELINE_TRACE_DIAG,
     GPOMDP, GPOMDP_BASELINE
+};
+
+enum class IrlEpHess
+{
+    PGPE, PGPE_BASELINE
 };
 
 class IrlGradUtils
@@ -59,6 +69,23 @@ private:
 
 private:
     static std::map<std::string, IrlGrad> gradients;
+
+
+};
+
+class IrlEpGradUtils
+{
+public:
+    static bool isValid(const std::string& type);
+    static IrlEpGrad fromString(const std::string& type);
+    static std::string toString(IrlEpGrad type);
+    static std::string getOptions();
+
+private:
+    static std::map<std::string, IrlEpGrad> initGradients();
+
+private:
+    static std::map<std::string, IrlEpGrad> gradients;
 
 
 };
@@ -80,6 +107,52 @@ private:
 
 
 };
+
+
+class IrlEpHessUtils
+{
+public:
+    static bool isValid(const std::string& type);
+    static IrlEpHess fromString(const std::string& type);
+    static std::string toString(IrlEpHess type);
+    static std::string getOptions();
+
+
+private:
+    static std::map<std::string, IrlEpHess> initHessians();
+
+private:
+    static std::map<std::string, IrlEpHess> hessians;
+
+
+};
+
+
+inline std::ostream& operator<< (std::ostream& stream, IrlGrad grad)
+{
+    stream << IrlGradUtils::toString(grad);
+    return stream;
+}
+
+inline std::ostream& operator<< (std::ostream& stream, IrlEpGrad grad)
+{
+    stream << IrlEpGradUtils::toString(grad);
+    return stream;
+}
+
+
+inline std::ostream& operator<< (std::ostream& stream, IrlHess hess)
+{
+    stream << IrlHessUtils::toString(hess);
+    return stream;
+}
+
+inline std::ostream& operator<< (std::ostream& stream, IrlEpHess hess)
+{
+    stream << IrlEpHessUtils::toString(hess);
+    return stream;
+}
+
 
 }
 

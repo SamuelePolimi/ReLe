@@ -25,7 +25,7 @@
 #include "rele/policy/parametric/differentiable/NormalPolicy.h"
 #include "rele/policy/parametric/differentiable/LinearPolicy.h"
 #include "rele/policy/parametric/differentiable/PortfolioNormalPolicy.h"
-#include "rele/policy/parametric/differentiable/GibbsPolicy.h"
+#include "rele/policy/parametric/differentiable/GenericGibbsPolicy.h"
 #include "rele/policy/parametric/differentiable/GenericNormalPolicy.h"
 #include "rele/policy/parametric/differentiable/ParametricMixturePolicy.h"
 #include "rele/policy/nonparametric/RandomPolicy.h"
@@ -45,6 +45,8 @@
 using namespace std;
 using namespace ReLe;
 using namespace arma;
+
+//TODO [CLEANUP] implement or remove test
 
 void help(char* argv[])
 {
@@ -309,13 +311,14 @@ int main(int argc, char *argv[])
         for (int i = 0; i < basis.size(); ++i)
             std::cout << *(basis[i]) << std::endl;
         DenseFeatures phi(basis);
+        LinearApproximator reg(phi);
 
         //----- NormalPolicy
         vector<FiniteAction> actions;
         for (int i = 0; i < nactions(0); ++i)
             actions.push_back(FiniteAction(i));
 
-        ParametricGibbsPolicy<DenseState> policy(actions, phi, 1.0/inverseT(0));
+        GenericParametricGibbsPolicy<DenseState> policy(actions, reg, 1.0/inverseT(0));
         policy.setParameters(params);
 
         cout << policy.getPolicyName() << endl;
@@ -932,25 +935,21 @@ int main(int argc, char *argv[])
     else if (strcmp(argv[1], "linear") == 0)
     {
         //----- DetLinearPolicy
-        //TODO!!
         abort();
     }
     else if (strcmp(argv[1], "random") == 0)
     {
         //----- RandomPolicy
-        //TODO!!
         abort();
     }
     else if (strcmp(argv[1], "randomdiscrete") == 0)
     {
         //----- StochasticDiscretePolicy
-        //TODO!!
         abort();
     }
     else if (strcmp(argv[1], "randomdiscretebias") == 0)
     {
         //----- RandomDiscreteBiasPolicy
-        //TODO!!
         abort();
     }
     else

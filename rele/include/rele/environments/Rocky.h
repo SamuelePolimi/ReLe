@@ -32,34 +32,48 @@
 namespace ReLe
 {
 
+/*!
+ * This class implements an environment similar to the Pursuer problem.
+ * In this task, Rocky has to reach the chicken moving in a
+ * continuous MDP.
+ */
 class Rocky : public ContinuousMDP
 {
 public:
+    /*!
+     * Constructor.
+     */
     Rocky();
+
+    /*!
+     * \see Environment::step
+     */
     virtual void step(const DenseAction& action, DenseState& nextState,
                       Reward& reward) override;
+
+    /*!
+     * \see Environment::getInitialState
+     */
     virtual void getInitialState(DenseState& state) override;
 
     enum StateComponents
     {
-        //robot state
+        // robot state
         x = 0,
         y,
         theta,
-        //robot sensors
+        // robot sensors
         energy,
         food,
-        //rocky state
+        // rocky state
         xr,
         yr,
         thetar,
-        //state size
+        // state size
         STATESIZE
     };
 
 private:
-
-
     class Predictor
     {
     public:
@@ -71,14 +85,13 @@ private:
     private:
         const double dt;
 
-        //predictor state
+        // predictor state
         double thetaM;
         double v;
 
-        //walls
+        // walls
         const Range limitX;
         const Range limitY;
-
     };
 
 private:
@@ -92,7 +105,7 @@ private:
     const Range limitY;
     const Range maxEnergy;
 
-    //Predictor for rocky
+    // Predictor for rocky
     Predictor predictor;
 
     void computeReward(Reward& reward);
@@ -102,7 +115,6 @@ private:
                          double& yrabs);
     void computeRockyControl(double& vr, double& omegar);
 };
-
 
 }
 

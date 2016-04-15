@@ -25,7 +25,7 @@
 #define INCLUDE_RELE_APPROXIMATORS_REGRESSORS_FFNEURALNETWORKENSEMBLE_H_
 
 #include "rele/approximators/regressors/nn/FFNeuralNetwork.h"
-#include "rele/approximators/Ensemble.h"
+#include "rele/approximators/regressors/Ensemble.h"
 
 
 namespace ReLe
@@ -57,12 +57,12 @@ public:
 
     virtual void writeOnStream(std::ofstream& out)
     {
-        // TODO: Implement
+        //TODO [SERIALIZATION] implement
     }
 
     virtual void readFromStream(std::ifstream& in)
     {
-        // TODO: Implement
+        //TODO [SERIALIZATION] implement
     }
 
     virtual ~FFNeuralNetworkEnsemble_()

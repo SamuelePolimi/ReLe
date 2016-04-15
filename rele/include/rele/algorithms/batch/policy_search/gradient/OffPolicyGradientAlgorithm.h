@@ -38,19 +38,28 @@ public:
     OffPolicyGradientAlgorithm(OffGradType type,
                                Policy<ActionC, StateC>& behaviour,
                                DifferentiablePolicy<ActionC, StateC>& policy,
+                               GradientStep& stepRule, unsigned int rewardIndex = 0)
+        : OffPolicyGradientAlgorithm(type, behaviour, policy, stepRule, new IndexRT(rewardIndex))
+    {
+        deleteReward = true;
+    }
+
+    OffPolicyGradientAlgorithm(OffGradType type,
+                               Policy<ActionC, StateC>& behaviour,
+                               DifferentiablePolicy<ActionC, StateC>& policy,
                                GradientStep& stepRule, RewardTransformation* rewardf) :
         type(type), behaviour(behaviour), policy(policy),
-        stepRule(stepRule), rewardf(rewardf)
+        stepRule(stepRule), rewardf(rewardf), deleteReward(false)
     {
         calculator = nullptr;
     }
 
-    virtual void init(Dataset<ActionC, StateC>& data, double gamma) override
+    virtual void init(Dataset<ActionC, StateC>& data, EnvironmentSettings& envSettings) override
     {
         if(calculator)
             delete calculator;
 
-        this->gamma = gamma;
+        this->gamma = envSettings.gamma;
         calculator = OffGradientCalculatorFactory<ActionC, StateC>::build(type, *rewardf, data, policy, behaviour, this->gamma);
     }
 
@@ -58,13 +67,8 @@ public:
     {
         arma::vec gradient = calculator->computeGradient();
 
-        // compute step size
-        unsigned int dp = gradient.n_elem;
-        arma::mat eMetric = arma::eye(dp,dp);
-        arma::vec step_size = stepRule.stepLength(gradient, eMetric);
-
         // Update policy
-        arma::vec newvalues = policy.getParameters() + gradient * step_size;
+        arma::vec newvalues = policy.getParameters() + stepRule(gradient);
         policy.setParameters(newvalues);
     }
 
@@ -75,7 +79,8 @@ public:
 
     virtual ~OffPolicyGradientAlgorithm()
     {
-
+        if(deleteReward)
+            delete rewardf;
     }
 
 private:
@@ -85,6 +90,8 @@ private:
     Policy<ActionC, StateC>& behaviour;
     DifferentiablePolicy<ActionC, StateC>& policy;
     GradientStep& stepRule;
+
+    bool deleteReward;
 
 
 };

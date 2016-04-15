@@ -25,7 +25,7 @@
 #define INCLUDE_RELE_APPROXIMATORS_REGRESSORS_EXTRATREEENSEMBLE_H_
 
 #include "ExtraTree.h"
-#include "rele/approximators/Ensemble.h"
+#include "rele/approximators/regressors/Ensemble.h"
 
 
 namespace ReLe
@@ -66,12 +66,12 @@ public:
 
     virtual void writeOnStream(std::ofstream& out) override
     {
-        // TODO: Implement
+        //TODO [SERIALIZATION] implement
     }
 
     virtual void readFromStream(std::ifstream& in) override
     {
-        // TODO: Implement
+        //TODO [SERIALIZATION] implement
     }
 
     virtual ~ExtraTreeEnsemble_()

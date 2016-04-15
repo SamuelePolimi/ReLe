@@ -30,9 +30,10 @@
 #include "rele/core/Basics.h"
 #include "rele/core/BasicFunctions.h"
 #include "rele/algorithms/policy_search/BlackBoxOutputData.h"
-#include "rele/approximators/RewardTransformation.h"
 #include <cassert>
 #include <iomanip>
+
+#include "rele/core/RewardTransformation.h"
 #include "rele/algorithms/step_rules/GradientStep.h"
 
 namespace ReLe
@@ -207,7 +208,7 @@ protected:
     arma::vec history_J;
     RewardTransformation* rewardTr;
     bool cleanRT;
-    bool output2LogReady; //TODO levare baseline
+    bool output2LogReady;
     AgentOutputC* currentItStats;
 };
 

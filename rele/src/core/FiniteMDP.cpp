@@ -45,10 +45,10 @@ FiniteMDP::FiniteMDP(arma::cube P, arma::cube R, arma::cube Rsigma, EnvironmentS
 {
     chekMatricesDimensions(P, R, Rsigma);
 
-    settings->finiteStateDim = P.n_cols;
-    settings->finiteActionDim = P.n_rows;
-    settings->continuosStateDim = 0;
-    settings->continuosActionDim = 0;
+    settings->statesNumber = P.n_cols;
+    settings->actionsNumber = P.n_rows;
+    settings->stateDimensionality = 1;
+    settings->actionDimensionality = 1;
 
     findAbsorbingStates();
 }
@@ -78,7 +78,12 @@ void FiniteMDP::step(const FiniteAction& action, FiniteState& nextState,
 
 void FiniteMDP::getInitialState(FiniteState& state)
 {
-    size_t x = RandomGenerator::sampleUniformInt(0, P.n_cols - 1);
+    size_t x;
+    do
+    {
+        x = RandomGenerator::sampleUniformInt(0, P.n_cols - 1);
+    }
+    while(absorbingStates.count(x) != 0);
 
     currentState.setStateN(x);
     state.setStateN(x);
@@ -108,11 +113,11 @@ void FiniteMDP::setupenvironment(bool isFiniteHorizon, unsigned int horizon,
     task.gamma = gamma;
     task.isAverageReward = false;
     task.isEpisodic = false;
-    task.finiteStateDim = P.n_cols;
-    task.finiteActionDim = P.n_rows;
-    task.continuosStateDim = 0;
-    task.continuosActionDim = 0;
-    task.rewardDim = 1;
+    task.statesNumber = P.n_cols;
+    task.actionsNumber = P.n_rows;
+    task.stateDimensionality = 1;
+    task.actionDimensionality = 1;
+    task.rewardDimensionality = 1;
 }
 
 void FiniteMDP::findAbsorbingStates()

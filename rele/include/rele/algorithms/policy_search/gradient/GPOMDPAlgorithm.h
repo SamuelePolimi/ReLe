@@ -224,18 +224,15 @@ protected:
         else
             gradient /= nbEpisodesToEvalPolicy;
 
-        //--- Compute learning step
-        arma::vec step_size = stepLength.stepLength(gradient);
         //---
 
         //--- save actual policy performance
         currentItStats->history_J = history_J;
         currentItStats->history_gradients = history_sumdLogPi;
         currentItStats->estimated_gradient = gradient;
-        currentItStats->stepLength = step_size;
         //---
 
-        arma::vec newvalues = policy.getParameters() + gradient * step_size;
+        arma::vec newvalues = policy.getParameters() + stepLength(gradient);
         policy.setParameters(newvalues);
 
 
@@ -245,7 +242,7 @@ protected:
         baseline_num2_single.zeros();
         baseline_den.zeros();
         baseline_num.zeros();
-        episodeStepReward.zeros(); //TODO levami
+        episodeStepReward.zeros();
 
     }
 

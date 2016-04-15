@@ -29,21 +29,63 @@
 namespace ReLe
 {
 
+/*!
+ * This class implements a Linear-Quadratic Regulator.
+ * This task aims to minimize the undesired deviations
+ * from nominal values of some controller settings
+ * in control problems.
+ *
+ * References
+ * ==========
+ * [Parisi, Pirotta, Smacchia, Bascetta, Restelli. Policy gradient approaches for multi-objective sequential decision making. IJCNN 2014](http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber=6889738)
+ */
 class LQR: public ContinuousMDP
 {
     friend class LQRsolver;
+    friend class LQRExact;
 public:
     enum S0Type {FIXED, RANDOM};
 
+    /*!
+     * Constructor.
+     * \param dimension MDP dimension
+     * \param reward_dimension reward dimension
+     * \param eps
+     * \param gamma MDP discount factor
+     * \param horizon MDP horizon
+     */
     LQR(unsigned int dimension, unsigned int reward_dimension,
         double eps = 0.1, double gamma = 0.9, unsigned int horizon = 50);
+
+    /*!
+     * Constructor.
+     * \param A initialization matrix
+     * \param B initialization matrix
+     * \param Q
+     * \param R reward matrix
+     * \param gamma MDP discount factor
+     * \param horizon MDP horizon
+     */
     LQR(arma::mat& A, arma::mat& B, std::vector<arma::mat>& Q, std::vector<arma::mat>& R,
         double gamma = 0.9, unsigned int horizon = 50);
+
+    /*!
+     * \see Environment::step
+     */
     virtual void step(const DenseAction& action, DenseState& nextState,
                       Reward& reward) override;
+
+    /*!
+     * \see Environment::getInitialState
+     */
     virtual void getInitialState(DenseState& state) override;
 
 public:
+    /*!
+     * Setter.
+     * Set the initial state
+     * \param initialState initial state
+     */
     void setInitialState(arma::vec& initialState)
     {
         this->initialState = initialState;
@@ -56,11 +98,8 @@ private:
 private:
     arma::mat A, B;
     std::vector<arma::mat> Q, R;
-
     arma::vec initialState;
-
     S0Type startType;
-
 };
 
 }

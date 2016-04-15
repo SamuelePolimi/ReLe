@@ -1,5 +1,6 @@
+==================
 ReLe documentation
-================================
+==================
 
 This is the documentation for ReLe |release|, last updated |today|.
 
@@ -22,12 +23,6 @@ Contents
 .. toctree::
    :maxdepth: 2
 
-   gettingstarted
-   tutorial
    apireference
+   tutorials
 
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`search`

@@ -29,8 +29,8 @@ using namespace arma;
 namespace ReLe
 {
 
-WQ_Learning::WQ_Learning(ActionValuePolicy<FiniteState>& policy) :
-    Q_Learning(policy)
+WQ_Learning::WQ_Learning(ActionValuePolicy<FiniteState>& policy, LearningRate& alpha) :
+    Q_Learning(policy, alpha)
 {
 }
 
@@ -53,49 +53,47 @@ void WQ_Learning::step(const Reward& reward, const FiniteState& nextState,
     size_t xn = nextState.getStateN();
     double r = reward[0];
 
-	unsigned int nTrapz = 100;
+    arma::vec integrals(task.actionsNumber, arma::fill::zeros);
+    for(unsigned int i = 0; i < integrals.n_elem; i++)
+    {
+        arma::vec means = Q.row(xn).t();
+        arma::vec sigma = sampleStdQ.row(xn).t();
+        double pdfMean = means(i);
+        double pdfSampleStd = sigma(i);
+        double lowerLimit = pdfMean - sigmaBound * pdfSampleStd;
+        double upperLimit = pdfMean + sigmaBound * pdfSampleStd;
 
-	arma::vec integrals(task.finiteActionDim, arma::fill::zeros);
-	for(unsigned int i = 0; i < integrals.n_elem; i++)
-	{
-		arma::vec means = Q.row(xn).t();
-		arma::vec sigma = sampleStdQ.row(xn).t();
-		double pdfMean = means(i);
-		double pdfSampleStd = sigma(i);
-		double lowerLimit = pdfMean - 5 * pdfSampleStd;
-		double upperLimit = pdfMean + 5 * pdfSampleStd;
+        arma::vec trapz = arma::linspace(lowerLimit, upperLimit, nTrapz + 1);
+        double diff = trapz(1) - trapz(0);
 
-		arma::vec trapz = arma::linspace(lowerLimit, upperLimit, nTrapz + 1);
-		double diff = trapz(1) - trapz(0);
+        double result = 0;
+        for(unsigned int t = 0; t < trapz.n_elem - 1; t++)
+        {
+            arma::vec cdfs(idxs.n_cols, arma::fill::zeros);
+            for(unsigned int j = 0; j < cdfs.n_elem; j++)
+            {
+                boost::math::normal cdfNormal(means(idxs(i, j)), sigma(idxs(i, j)));
+                cdfs(j) = cdf(cdfNormal, trapz(t));
+            }
+            boost::math::normal pdfNormal(pdfMean, pdfSampleStd);
+            double t1 = pdf(pdfNormal, trapz(t)) * arma::prod(cdfs);
 
-		double result = 0;
-		for(unsigned int t = 0; t < trapz.n_elem - 1; t++)
-		{
-			arma::vec cdfs(idxs.n_cols, arma::fill::zeros);
-			for(unsigned int j = 0; j < cdfs.n_elem; j++)
-			{
-				boost::math::normal cdfNormal(means(idxs(i, j)), sigma(idxs(i, j)));
-				cdfs(j) = cdf(cdfNormal, trapz(t));
-			}
-			boost::math::normal pdfNormal(pdfMean, pdfSampleStd);
-			double t1 = pdf(pdfNormal, trapz(t)) * arma::prod(cdfs);
+            for(unsigned int j = 0; j < cdfs.n_elem; j++)
+            {
+                boost::math::normal cdfNormal(means(idxs(i, j)), sigma(idxs(i, j)));
+                cdfs(j) = cdf(cdfNormal, trapz(t + 1));
+            }
+            double t2 = pdf(pdfNormal, trapz(t + 1)) * arma::prod(cdfs);
 
-			for(unsigned int j = 0; j < cdfs.n_elem; j++)
-			{
-				boost::math::normal cdfNormal(means(idxs(i, j)), sigma(idxs(i, j)));
-				cdfs(j) = cdf(cdfNormal, trapz(t + 1));
-			}
-			double t2 = pdf(pdfNormal, trapz(t + 1)) * arma::prod(cdfs);
+            result += (t1 + t2) * diff * 0.5;
+        }
 
-			result += (t1 + t2) * diff * 0.5;
-		}
+        integrals(i) = result;
+    }
 
-		integrals(i) = result;
-	}
+    double W = arma::dot(Q.row(xn), integrals);
 
-	double W = arma::dot(Q.row(xn), integrals);
-
-	double target = r + task.gamma * W;
+    double target = r + task.gamma * W;
 
     updateMeanAndSampleStdQ(target);
 
@@ -121,12 +119,12 @@ void WQ_Learning::init()
 {
     FiniteTD::init();
 
-    idxs = arma::mat(task.finiteActionDim, task.finiteActionDim - 1, arma::fill::zeros);
+    idxs = arma::mat(task.actionsNumber, task.actionsNumber - 1, arma::fill::zeros);
     arma::vec actions = arma::linspace(0, idxs.n_cols, idxs.n_rows);
     for(unsigned int i = 0; i < idxs.n_rows; i++)
         idxs.row(i) = actions(arma::find(actions != i)).t();
 
-    sampleStdQ = Q + STD_INF_VALUE;
+    sampleStdQ = Q + stdInfValue;
     Q2 = Q;
     weightsVar = Q;
     nUpdates = Q;
@@ -134,6 +132,7 @@ void WQ_Learning::init()
 
 inline void WQ_Learning::updateMeanAndSampleStdQ(double target)
 {
+    double alpha = this->alpha(x, u);
     Q(x, u) = (1 - alpha) * Q(x, u) + alpha * target;
     Q2(x, u) = (1 - alpha) * Q2(x, u) + alpha * target * target;
 
@@ -146,10 +145,10 @@ inline void WQ_Learning::updateMeanAndSampleStdQ(double target)
 
         double var = (Q2(x, u) - Q(x, u) * Q(x, u)) / n;
 
-        if(var >= STD_ZERO_VALUE * STD_ZERO_VALUE)
+        if(var >= stdZeroValue * stdZeroValue)
             sampleStdQ(x, u) = sqrt(var);
         else
-            sampleStdQ(x, u) = STD_ZERO_VALUE;
+            sampleStdQ(x, u) = stdZeroValue;
     }
 }
 

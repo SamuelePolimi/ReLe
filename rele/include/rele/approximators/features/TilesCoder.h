@@ -30,10 +30,22 @@
 namespace ReLe
 {
 
-template<class InputC>
-class TilesCoder_: public Features_<InputC, false>
+/*!
+ * A tile coder can be used to transform tiles into a set of features.
+ * A tile coder evaluate each tile set provided and transform it in a coherent set of
+ * binary features sparse matrix.
+ */
+template<class InputC, bool denseOutput = false>
+class TilesCoder_: public Features_<InputC, denseOutput>
 {
+    using return_type = typename feature_traits<denseOutput>::type;
+
 public:
+    /*!
+     * Constructor.
+     * \param tiles a set of tiles to be used
+     * \param outputs the number of output features vectors
+     */
     TilesCoder_(Tiles_<InputC>* tiles, unsigned int outputs = 1) :
         outputs(outputs)
     {
@@ -41,15 +53,21 @@ public:
         rowsN = tiles->size() * outputs;
     }
 
+    /*!
+     * Constructor.
+     * \param tilesVector a vector of multiple tilings to be used
+     * \param outputs the number of output features vectors
+     */
     TilesCoder_(TilesVector_<InputC>& tilesVector, unsigned int outputs = 1) :
         tilesVector(tilesVector), outputs(outputs), rowsN(0)
     {
         computeRows();
     }
 
-    virtual arma::sp_mat operator()(const InputC& input) override
+    virtual return_type operator()(const InputC& input) override
     {
-        arma::sp_mat output(rowsN, outputs);
+        return_type output(rowsN, outputs);
+        output.zeros();
 
         unsigned int offset = 0;
         for(unsigned int o = 0; o < outputs; o++)
@@ -75,6 +93,10 @@ public:
         return outputs;
     }
 
+    /*!
+     * Destructor.
+     * Destroys also all the tiles passed to the coder.
+     */
     virtual ~TilesCoder_()
     {
         for(auto tile : tilesVector)
@@ -84,7 +106,7 @@ public:
 protected:
     void computeTile(const InputC& input, unsigned int offset,
                      unsigned int o, Tiles_<InputC>& tiles,
-                     arma::sp_mat& output)
+                     return_type& output)
     {
         try
         {
@@ -114,7 +136,11 @@ private:
     size_t rowsN;
 };
 
+//! Template alias.
 typedef TilesCoder_<arma::vec> TilesCoder;
+
+//! Template Alias.
+typedef TilesCoder_<arma::vec, true> DenseTilesCoder;
 
 }
 

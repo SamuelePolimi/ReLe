@@ -24,7 +24,7 @@
 #ifndef INCLUDE_RELE_ALGORITHMS_BATCH_POLICY_SEARCH_GRADIENT_OFFGRADIENTCALCULATOR_H_
 #define INCLUDE_RELE_ALGORITHMS_BATCH_POLICY_SEARCH_GRADIENT_OFFGRADIENTCALCULATOR_H_
 
-#include "rele/approximators/RewardTransformation.h"
+#include "rele/core/RewardTransformation.h"
 #include "rele/core/Transition.h"
 #include "rele/policy/Policy.h"
 
@@ -44,7 +44,7 @@ public:
 
     }
 
-    virtual arma::vec computeGradient() = 0;
+    virtual arma::vec computeGradient(const arma::uvec& indices = arma::uvec()) = 0;
 
     virtual ~OffGradientCalculator()
     {
@@ -78,6 +78,30 @@ protected:
 
         importanceWeights = targetIW / behavoiourIW;
 
+    }
+
+    inline unsigned int getEpisodeIndex(const arma::uvec& indexes, unsigned int i)
+    {
+        if(indexes.is_empty())
+        {
+            return i;
+        }
+        else
+        {
+            return indexes(i);
+        }
+    }
+
+    inline unsigned int getEpisodesNumber(const arma::uvec& indexes)
+    {
+        if(indexes.is_empty())
+        {
+            return data.size();
+        }
+        else
+        {
+            return indexes.n_elem;
+        }
     }
 
 protected:

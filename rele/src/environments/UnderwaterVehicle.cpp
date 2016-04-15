@@ -21,7 +21,7 @@
  *  along with rele.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../../include/rele/environments/UnderwaterVehicle.h"
+#include "rele/environments/UnderwaterVehicle.h"
 
 #include "rele/utils/RandomGenerator.h"
 #include <cassert>
@@ -42,11 +42,11 @@ void UWVSettings::defaultSettings(UWVSettings& settings)
 {
     //Environment Parameters
     settings.gamma = 0.99;
-    settings.continuosStateDim = 1;
-    settings.continuosActionDim = -1;
-    settings.rewardDim = 4;
-    settings.finiteStateDim = -1;
-    settings.finiteActionDim = 5;
+    settings.stateDimensionality = 1;
+    settings.actionDimensionality = -1;
+    settings.rewardDimensionality = 4;
+    settings.statesNumber = -1;
+    settings.actionsNumber = 5;
     settings.isFiniteHorizon = false;
     settings.isAverageReward = false;
     settings.isEpisodic = false;
@@ -72,12 +72,12 @@ UWVSettings::~UWVSettings()
 
 void UWVSettings::WriteToStream(ostream& out) const
 {
-    //TODO
+    //TODO [SERIALIZATION] implement
 }
 
 void UWVSettings::ReadFromStream(istream& in)
 {
-    //TODO
+    //TODO [SERIALIZATION] implement
 }
 
 
@@ -89,14 +89,14 @@ UnderwaterVehicle::UnderwaterVehicle()
     : DenseMDP(new UWVSettings()), cleanConfig(true), uwvode(), config(static_cast<UWVSettings*>(settings)),
       controlled_stepper (make_controlled< error_stepper_type >( 1.0e-6 , 1.0e-6 ))
 {
-    currentState.set_size(this->getSettings().continuosStateDim);
+    currentState.set_size(this->getSettings().stateDimensionality);
 }
 
 UnderwaterVehicle::UnderwaterVehicle(UWVSettings& config)
     : DenseMDP(&config), cleanConfig(false), config(&config), uwvode(),
       controlled_stepper (make_controlled< error_stepper_type >( 1.0e-6 , 1.0e-6 ))
 {
-    currentState.set_size(this->getSettings().continuosStateDim);
+    currentState.set_size(this->getSettings().stateDimensionality);
 }
 
 void UnderwaterVehicle::step(const FiniteAction& action, DenseState& nextState, Reward& reward)

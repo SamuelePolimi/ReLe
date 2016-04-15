@@ -25,6 +25,8 @@
 #define INCLUDE_RELE_ALGORITHMS_BATCH_BATCHAGENT_H_
 
 #include "rele/approximators/data/BatchData.h"
+#include "rele/core/Transition.h"
+#include "rele/approximators/Regressors.h"
 
 namespace ReLe
 {
@@ -50,7 +52,7 @@ public:
      * Is called by the BatchCore as the first step of the learning process.
      * \param data the dataset to be used for learning
      */
-    virtual void init(Dataset<ActionC, StateC>& data, double gamma) = 0;
+    virtual void init(Dataset<ActionC, StateC>& data, EnvironmentSettings& envSettings) = 0;
 
     /*!
      * This method implement a step of the learning process trough the dataset. Must be implemented.

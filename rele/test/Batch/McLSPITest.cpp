@@ -25,7 +25,7 @@
 #include "rele/core/BatchCore.h"
 #include "rele/core/PolicyEvalAgent.h"
 
-#include "rele/policy/parametric/differentiable/GibbsPolicy.h"
+#include "rele/policy/parametric/differentiable/GenericGibbsPolicy.h"
 #include "rele/approximators/features/DenseFeatures.h"
 #include "rele/approximators/features/SparseFeatures.h"
 #include "rele/statistics/DifferentiableNormals.h"
@@ -40,7 +40,6 @@
 #include "rele/utils/FileManager.h"
 
 #include "rele/environments/MountainCar.h"
-#include "rele/statistics/MLE.h"
 #include "rele/algorithms/batch/td/LSPI.h"
 #include "rele/utils/ArmadilloExtensions.h"
 #include "rele/policy/nonparametric/RandomPolicy.h"
@@ -178,8 +177,10 @@ int main(int argc, char *argv[])
     core.getSettings().maxBatchIterations = 100;
 
     double gamma = 0.9;
+    EnvironmentSettings envSettings;
+    envSettings.gamma = gamma;
 
-    core.run(gamma);
+    core.run(envSettings);
 
 //    cout << dynamic_cast<LinearApproximator*>(lspiPolicy.getQ())->getParameters() << endl;
 

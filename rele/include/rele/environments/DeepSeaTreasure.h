@@ -29,14 +29,35 @@
 namespace ReLe
 {
 
+/*!
+ * This class implements the Deep Sea Treasure problem.
+ * This task is a grid world modeling a submarine
+ * environment with multiple treasures with different
+ * values. The aim is to minimize the time to reach
+ * the treasures and maximize the values of reached
+ * treasures.
+ *
+ * References
+ * ==========
+ * [Van Moffaert, Nowe. Multi-Objective Reinforcement Learning using Sets of Pareto Dominating Policies](http://www.jmlr.org/papers/volume15/vanmoffaert14a/vanmoffaert14a.pdf)
+ */
 class DeepSeaTreasure: public DenseMDP
 {
 public:
-
+    /*!
+     * Constructor.
+     */
     DeepSeaTreasure();
 
+    /*!
+     * \see Environment::step
+     */
     virtual void step(const FiniteAction& action, DenseState& nextState,
                       Reward& reward) override;
+
+    /*!
+     * \see Environment::getInitialState
+     */
     virtual void getInitialState(DenseState& state) override;
 
 private:

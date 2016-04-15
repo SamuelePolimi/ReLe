@@ -21,7 +21,6 @@
  *  along with rele.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "rele/statistics/DifferentiableNormals.h"
 #include "rele/core/BatchCore.h"
 #include "rele/policy/parametric/differentiable/NormalPolicy.h"
 #include "rele/algorithms/batch/policy_search/gradient/OffPolicyGradientAlgorithm.h"
@@ -30,13 +29,6 @@
 #include "rele/utils/RandomGenerator.h"
 #include "rele/utils/FileManager.h"
 #include "rele/environments/NLS.h"
-
-#include <iostream>
-#include <iomanip>
-#include <string>
-#include <map>
-#include <random>
-#include <cmath>
 
 using namespace std;
 using namespace ReLe;
@@ -64,7 +56,7 @@ int main(int argc, char *argv[])
     //-2.9000    7.7000    8.5230
     //-3.1000    9.1000    8.5243
     //-2.8000    7.3000    8.5247
-    int dim = mdp.getSettings().continuosStateDim;
+    int dim = mdp.getSettings().stateDimensionality;
 
     // define policy
     BasisFunctions basis = IdentityBasis::generate(dim);
@@ -83,13 +75,13 @@ int main(int argc, char *argv[])
     NormalStateDependantStddevPolicy target(phi, stdPhi, stdWeights);
 
 
+
     // run batch training
     AdaptiveGradientStep stepl(0.1);
-    IndexRT rewardF(0);
 
     OffGradType type = OffGradType::GPOMDP_BASELINE_SINGLE;
-    OffPolicyGradientAlgorithm<DenseAction, DenseState> offagent(type, target, behavioral, stepl, &rewardF);
-    BatchCore<DenseAction, DenseState> batchcore(mdp, offagent);
+    OffPolicyGradientAlgorithm<DenseAction, DenseState> offagent(type, target, behavioral, stepl);
+    auto&& batchcore = buildBatchCore(mdp, offagent);
 
     batchcore.getSettings().nEpisodes = 10000;
     batchcore.getSettings().episodeLength = mdp.getSettings().horizon;

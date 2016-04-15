@@ -41,13 +41,8 @@ int main(int argc, char *argv[])
     config.envName = "portfolio";
 
     Portfolio mdp;
-    //with these settings
-    //max in ( many optimal points ) -> J = 8.5
-    //note that there are multiple optimal solutions
-    //e.g.
-    //x, 10, 10, 10, 10, .... (guardare documenti)
 
-    int dim = mdp.getSettings().continuosStateDim;
+    int dim = mdp.getSettings().stateDimensionality;
 
     //--- define policy (low level)
     BasisFunctions basis = IdentityBasis::generate(dim);

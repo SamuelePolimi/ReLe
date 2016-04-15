@@ -30,14 +30,14 @@
 #include "rele/approximators/basis/PolynomialFunction.h"
 
 #include "rele/environments/LQR.h"
-#include "rele/solvers/LQRsolver.h"
+#include "rele/solvers/lqr/LQRsolver.h"
 #include "rele/core/PolicyEvalAgent.h"
 #include "rele/algorithms/policy_search/PGPE/PGPE.h"
 #include "rele/IRL/ParametricRewardMDP.h"
 #include "rele/utils/RandomGenerator.h"
 #include "rele/utils/FileManager.h"
 
-#include "rele/statistics/MLE.h"
+#include "rele/policy/utils/MLE.h"
 
 using namespace std;
 using namespace ReLe;
@@ -170,16 +170,10 @@ int main(int argc, char *argv[])
     arma::vec startVal;
     startVal.load(argv[2], arma::raw_ascii);
     unsigned int nbIter = 100;
-    arma::vec pp = mle.solve(startVal, nbIter);
+    double logLikelihood = mle.compute(startVal, nbIter);
+    arma::vec pp = policy->getParameters();
 
     pp.save(fm.addPath("mleparams.log"), arma::raw_ascii);
-
-    unsigned int nval = mle.getFunEvals();
-    cout << "Fun Evals: " << nval << endl;
-    if (nval == nbIter)
-    {
-        cout << "WARNING: maximum number of function evaluations reached!" << endl;
-    }
 
     std::cerr << pp.t();
     policy->setParameters(pp);

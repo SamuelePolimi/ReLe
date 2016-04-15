@@ -33,7 +33,6 @@
 #include "rele/approximators/basis/PolynomialFunction.h"
 
 #include "rele/environments/LQR.h"
-#include "rele/solvers/LQRsolver.h"
 #include "rele/core/PolicyEvalAgent.h"
 #include "rele/IRL/algorithms/GIRL.h"
 #include "rele/algorithms/policy_search/PGPE/PGPE.h"
@@ -46,7 +45,7 @@
 
 #include <boost/timer/timer.hpp>
 
-#include "rele/statistics/MLE.h"
+#include "rele/policy/utils/MLE.h"
 
 using namespace boost::timer;
 using namespace std;
@@ -202,7 +201,8 @@ int main(int argc, char *argv[])
     cout << endl << "Policy: " << policy.getPolicyName() << endl << endl;
 
     MLE<DenseAction,DenseState> mle(policy, data);
-    arma::vec pp = mle.solve(startVal, 400);
+    mle.compute(startVal, 400);
+    arma::vec pp = policy.getParameters();
 
     std::cerr << endl << "MLE Params (" << pp.n_elem << " weights): " << endl << pp.t();
     policy.setParameters(pp);

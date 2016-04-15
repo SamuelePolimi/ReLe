@@ -50,7 +50,7 @@ double NormalPolicy::operator()(const arma::vec& state, const arma::vec& action)
     double scalara = action[0];
 
     // compute probability
-    return ReLe::normpdf(scalara, mMean, mInitialStddev*mInitialStddev);
+    return normpdf(scalara, mMean, mInitialStddev*mInitialStddev);
 }
 
 arma::vec NormalPolicy::operator() (const arma::vec& state)
@@ -147,7 +147,7 @@ arma::vec NormalLearnableStateDependantStddevPolicy::difflog(const arma::vec &st
 
 arma::mat NormalLearnableStateDependantStddevPolicy::diff2log(const arma::vec& state, const arma::vec& action)
 {
-    //TODO Implement
+    //TODO [IMPORTANT] Implement
     return arma::mat();
 }
 
@@ -178,21 +178,10 @@ arma::vec MVNPolicy::difflog(const arma::vec &state, const arma::vec &action)
 {
     updateInternalState(state);
 
-    arma::vec smdiff(mCovariance.n_rows);
-    //        std::cout << "Action: ";
-    for (unsigned i = 0; i < mCovariance.n_rows; ++i)
-    {
-        smdiff(i) = action[i] - mMean(i);
-        //            std::cout << action[i] << " ";
-    }
-    //        std::cout << "\n";
+    arma::vec smdiff = action - mMean;
 
     Features& basis = approximator.getFeatures();
     arma::mat features = basis(state);
-
-    //        MY_PRINT(features);
-    //        MY_PRINT(smdiff);
-    //        MY_PRINT(mCinv);
 
     // compute gradient
     return 0.5 * features * (mCinv + mCinv.t()) * smdiff;
@@ -370,7 +359,7 @@ arma::mat MVNLogisticPolicy::diff2log(const arma::vec& state, const arma::vec& a
 {
     updateInternalState(state);
 
-    //TODO controllare implementazione
+    //TODO [IMPORTANT] controllare implementazione
     int paramSize = this->getParametersSize();
     arma::mat hessian(paramSize,paramSize,arma::fill::zeros);
     int dm = approximator.getParametersSize();

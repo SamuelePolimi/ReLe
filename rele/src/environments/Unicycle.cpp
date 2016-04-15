@@ -44,11 +44,11 @@ void UnicyclePolarSettings::defaultSettings(UnicyclePolarSettings& settings)
 {
     //Environment Parameters
     settings.gamma = 0.99;
-    settings.continuosStateDim = 3;
-    settings.continuosActionDim = 2;
-    settings.rewardDim = 1;
-    settings.finiteStateDim = 0;
-    settings.finiteActionDim = 0;
+    settings.stateDimensionality = 3;
+    settings.actionDimensionality = 2;
+    settings.rewardDimensionality = 1;
+    settings.statesNumber = 0;
+    settings.actionsNumber = 0;
     settings.isFiniteHorizon = false;
     settings.isAverageReward = false;
     settings.isEpisodic = true;
@@ -66,12 +66,12 @@ UnicyclePolarSettings::~UnicyclePolarSettings()
 
 void UnicyclePolarSettings::WriteToStream(std::ostream& out) const
 {
-    //TODO implement
+    //TODO [SERIALIZATION] implement
 }
 
 void UnicyclePolarSettings::ReadFromStream(std::istream& in)
 {
-    //TODO implement
+    //TODO [SERIALIZATION] implement
 }
 
 void UnicyclePolar::UnicyclePolarOde::operator ()(const state_type& x, state_type& dx,
@@ -105,14 +105,14 @@ UnicyclePolar::UnicyclePolar()
       controlled_stepper (make_controlled< error_stepper_type >( 1.0e-6 , 1.0e-6 ))
 {
     unicycleConfig = static_cast<UnicyclePolarSettings*>(settings);
-    currentState.set_size(unicycleConfig->continuosStateDim);
+    currentState.set_size(unicycleConfig->stateDimensionality);
 }
 
 UnicyclePolar::UnicyclePolar(UnicyclePolarSettings& config)
     : ContinuousMDP(&config), cleanConfig(false), unicycleConfig(&config),
       controlled_stepper (make_controlled< error_stepper_type >( 1.0e-6 , 1.0e-6 ))
 {
-    currentState.set_size(this->getSettings().continuosStateDim);
+    currentState.set_size(this->getSettings().stateDimensionality);
 }
 
 void UnicyclePolar::step(const DenseAction& action, DenseState& nextState, Reward& reward)

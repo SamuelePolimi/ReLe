@@ -54,20 +54,22 @@ struct EnvironmentSettings
     unsigned int horizon;
 
     //! number of finite states of the mdp. Should be zero for continuos state spaces
-    size_t finiteStateDim;
-    //! number of finite actions of the mdp. Should be zero for continuos action spaces
-    unsigned int finiteActionDim;
+    size_t statesNumber;
 
-    //! number of dimensions of the state space states of the mdp. Should be zero for finite state spaces
-    unsigned int continuosStateDim;
-    //! number of dimensions of the state space states of the mdp. Should be zero for finite state spaces
-    unsigned int continuosActionDim;
+    //! number of finite actions of the mdp. Should be zero for continuos action spaces
+    unsigned int actionsNumber;
+
+    //! number of dimensions of the state space states of the mdp. Should be one for finite state spaces
+    unsigned int stateDimensionality;
+
+    //! number of dimensions of the state space states of the mdp. Should be one for finite state spaces
+    unsigned int actionDimensionality;
 
     //! number of dimensions of the reward function
-    unsigned int rewardDim;
+    unsigned int rewardDimensionality;
 
     //! vector of maximum value of each dimension of the reward function
-    arma::vec max_obj; //TODO: possiamo mettere un range? (usato per normalizzazione in matlab, default 1)
+    arma::vec max_obj; //TODO [IMPORTANT][INTERFACE] possiamo mettere un range? (usato per normalizzazione in matlab, default 1). oppure togliere?
 
     /*!
      * Writes the struct to stream
@@ -75,9 +77,9 @@ struct EnvironmentSettings
     inline void writeToStream(std::ostream& out) const
     {
         out << std::setprecision(OS_PRECISION);
-        out << finiteStateDim << "\t" << finiteActionDim << std::endl;
-        out << continuosStateDim << "\t" << continuosActionDim << std::endl;
-        out << rewardDim << std::endl;
+        out << statesNumber << "\t" << actionsNumber << std::endl;
+        out << stateDimensionality << "\t" << actionDimensionality << std::endl;
+        out << rewardDimensionality << std::endl;
         out << gamma << "\t" << isFiniteHorizon << "\t" << horizon << "\t";
         out << isEpisodic << "\t" << isAverageReward << std::endl;
     }
@@ -87,9 +89,9 @@ struct EnvironmentSettings
      */
     inline void readFromStream(std::istream& in)
     {
-        in >> finiteStateDim >> finiteActionDim;
-        in >> continuosStateDim >> continuosActionDim;
-        in >> rewardDim;
+        in >> statesNumber >> actionsNumber;
+        in >> stateDimensionality >> actionDimensionality;
+        in >> rewardDimensionality;
         in >> gamma >> isFiniteHorizon >> horizon;
         in >> isEpisodic >> isAverageReward;
     }
@@ -322,7 +324,7 @@ public:
 
     /*!
      * Constructor.
-     * \params size the action dimensionality
+     * \param size the action dimensionality
      */
     DenseAction(std::size_t size) :
         arma::vec(size)
@@ -431,7 +433,7 @@ public:
 
     /*!
      * Setter.
-     * \param whether to set this state as an absorbing state or not.
+     * \param absorbing whether to set this state as an absorbing state or not.
      */
     inline void setAbsorbing(bool absorbing = true)
     {
@@ -516,7 +518,7 @@ public:
 
     /*!
      * Setter.
-     * \param actionN the action number to be set
+     * \param stateN the action number to be set
      */
     inline void setStateN(std::size_t stateN)
     {
@@ -573,7 +575,7 @@ public:
 
     /*!
      * Constructor.
-     * \params size the state dimensionality
+     * \param size the state dimensionality
      */
     DenseState(std::size_t size) :
         arma::vec(size)

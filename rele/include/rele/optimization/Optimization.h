@@ -33,9 +33,9 @@ namespace ReLe
 class Optimization
 {
 public:
-	/*!
-	 * This function implements the one sum constraint, to be used as nonlinear constraint in nlopt
-	 */
+    /*!
+     * This function implements the one sum constraint, to be used as nonlinear constraint in nlopt
+     */
     static double oneSumConstraint(unsigned int n, const double *x,
                                    double *grad, void *data)
     {
@@ -76,7 +76,7 @@ public:
      * 	    ...
      *
      * 	    nlopt::opt optimizator(optAlg, effective_dim);
-     *   	optimizator.set_min_objective(Optimization::objFunctionWrapper<Example, true> , this);
+     * 	    optimizator.set_min_objective(Optimization::objFunctionWrapper<Example, true> , this);
      *
      * 		...
      * }
@@ -88,7 +88,7 @@ public:
     static double objFunctionWrapper(unsigned int n, const double* x, double* grad,
                                      void* o)
     {
-        arma::vec df;
+        arma::vec df(n, arma::fill::zeros);
         arma::vec parV(const_cast<double*>(x), n, true);
         double value = static_cast<Class*>(o)->objFunction(parV, df);
 

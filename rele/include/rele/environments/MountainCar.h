@@ -29,6 +29,19 @@
 namespace ReLe
 {
 
+/*!
+ * This class implements the Mountain Car environment.
+ * In this problem a car is placed on a valley between two hills
+ * and has to reach the top of one of them.
+ * Unfortunately, it is not able to do so by only accelerating and,
+ * therefore, it has to accelerate in the opposite direction to use
+ * the slope of the other hill to acquire inertia that may allow it
+ * to reach the goal.
+ *
+ * References
+ * ==========
+ * [Sutton, Barto. Reinforcement Learning an introduction](http://webdocs.cs.ualberta.ca/~sutton/book/ebook/node89.html)
+ */
 class MountainCar: public DenseMDP
 {
 public:
@@ -37,6 +50,10 @@ public:
         velocity = 0, position = 1
     };
 
+    /*!
+     * Type of configuration obtained from different experiments
+     * in respective articles.
+     */
     enum ConfigurationsLabel
     {
         Sutton, Klein, Random
@@ -44,13 +61,25 @@ public:
 
 public:
 
+    /*!
+     * Constructor.
+     * \param label configuration type
+     */
     MountainCar(ConfigurationsLabel label = Sutton);
+
+    /*!
+     * \see Environment::step
+     */
     virtual void step(const FiniteAction& action, DenseState& nextState,
                       Reward& reward) override;
+
+    /*!
+     * \see Environment::getInitialState
+     */
     virtual void getInitialState(DenseState& state) override;
 
-    ConfigurationsLabel s0type;
-
+    //! Configuration type.
+    ConfigurationsLabel envType;
 };
 
 }

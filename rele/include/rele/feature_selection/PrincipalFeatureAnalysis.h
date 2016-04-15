@@ -24,137 +24,51 @@
 #ifndef INCLUDE_RELE_FEATURE_SELECTION_PRINCIPALFEATUREANALYSIS_H_
 #define INCLUDE_RELE_FEATURE_SELECTION_PRINCIPALFEATUREANALYSIS_H_
 
-#include "rele/approximators/regressors/others/NearestNeighbourRegressor.h"
-#include "rele/approximators/basis/IdentityBasis.h"
-#include "rele/approximators/features/DenseFeatures.h"
+
+#include "rele/feature_selection/FeatureSelectionAlgorithm.h"
 
 namespace ReLe
 {
 
-class PrincipalFeatureAnalysis
+/*!
+ * This class implements the Principal Feature Analysis (PFA).
+ * This method search the most promising features index to reduce dimensionality,
+ * thus maintaining the initial features, instead of creating new ones.
+ */
+class PrincipalFeatureAnalysis : public LinearFeatureSelectionAlgorithm
 {
 public:
+    /*!
+     * Constructor.
+     * \param varMin the minimum variability to retain from data
+     * \param useCorrelation if to use correlation or covariance matrix as selection criterion
+     */
+    PrincipalFeatureAnalysis(double varMin, bool useCorrelation = true);
+    virtual void createFeatures(const arma::mat& features) override;
+    virtual arma::mat getTransformation() override;
+    virtual arma::mat getNewFeatures() override;
 
-    static arma::uvec selectFeatures(arma::mat& features, double varMin, bool useCorrelation = true)
+    /*!
+     * Getter.
+     * \return the indexes of the most promising features
+     */
+    inline arma::uvec getIndexes()
     {
-        std::cout << "meanFeature" << std::endl << arma::sum(features,1)/ features.n_cols << std::endl;
-
-
-        arma::mat Sigma;
-
-        if(useCorrelation)
-        {
-            //compute correlation of features
-            Sigma = arma::cor(features.t());
-            Sigma = (Sigma + Sigma.t())/2;
-        }
-        else
-        {
-            //compute covariance of features
-            Sigma = arma::cov(features.t());
-        }
-
-        std::cout << "Sigma" << std::endl << Sigma << std::endl;
-
-        //compute eigenvalues and eigenvectors
-        arma::vec s;
-        arma::mat A;
-
-        arma::eig_sym(s, A, Sigma);
-        s = arma::sort(s, "descend");
-        A = fliplr(A);
-
-        //compute minimum features dimensions
-        unsigned int q = computeDimensions(s, varMin);
-
-        //select features
-        arma::mat Aq = A.cols(0, q-1).t();
-
-
-        if(q > 1)
-        {
-            arma::mat means;
-            arma::uvec clustersIndexes;
-            cluster(Aq, means, clustersIndexes, q);
-
-
-            arma::uvec idx = arma::linspace<arma::uvec>(0, features.n_rows -1, features.n_rows);
-
-            arma::uvec selectedFeatures(q);
-
-            for (unsigned int i = 0; i < q; i++)
-            {
-                arma::uvec elements = arma::find(clustersIndexes == i);
-                arma::mat clusterVectors = Aq.cols(elements);
-                arma::uvec vectorIdx = idx(elements);
-
-                unsigned int k = findNearest(clusterVectors, means.col(i));
-                selectedFeatures(i) = vectorIdx(k);
-            }
-
-            return arma::sort(selectedFeatures);
-        }
-        else
-        {
-            arma::vec mean = arma::sum(Aq, 1) / Aq.n_cols;
-
-            arma::uvec index(1);
-
-            index(0) = findNearest(Aq, mean);
-
-            return index;
-        }
-
+        return indexes;
     }
 
 private:
-    static unsigned int computeDimensions(arma::vec& s, double varMin)
-    {
-        std::cout << "s: " << s.t() << std::endl;
-        unsigned int q;
-        for (q = 0; q < s.n_elem; q++)
-        {
-            double var = arma::sum(s(arma::span(0, q)))/arma::sum(s);
-            std::cout << "var: " << var << std::endl;
-            if(var > varMin)
-                break;
-        }
+    unsigned int computeDimensions(arma::vec& s, double varMin);
+    void cluster(arma::mat& data, arma::mat& means, arma::uvec& clustersIndexes, unsigned int k);
+    unsigned int findNearest(const arma::mat& elements, const arma::vec mean);
 
-        return q+1;
-    }
+private:
+    unsigned int initialSize;
+    arma::uvec indexes;
+    arma::mat newFeatures;
 
-    static void cluster(arma::mat& data, arma::mat& means, arma::uvec& clustersIndexes, unsigned int k)
-    {
-        BasisFunctions basis = IdentityBasis::generate(data.n_rows);
-        DenseFeatures phi(basis);
-
-        NearestNeighbourRegressor regressor(phi, k);
-        regressor.setIterations(10);
-
-        regressor.trainFeatures(data);
-
-        means = regressor.getCentroids();
-        clustersIndexes = regressor.getClustersIndexes();
-    }
-
-    static unsigned int findNearest(const arma::mat& elements, const arma::vec mean)
-    {
-        unsigned int minIndex = 0;
-        double minDistance = std::numeric_limits<double>::infinity();
-
-        for (unsigned int j = 0; j < elements.n_cols; j++)
-        {
-            arma::vec delta = mean - elements.col(j);
-            double distance = arma::as_scalar(delta.t() * delta);
-            if (distance < minDistance)
-            {
-                minDistance = distance;
-                minIndex = j;
-            }
-        }
-
-        return minIndex;
-    }
+    double varMin;
+    bool useCorrelation;
 
 };
 

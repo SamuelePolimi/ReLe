@@ -29,11 +29,23 @@
 namespace ReLe
 {
 
+/*!
+ * This class implements the output data for the ReLe::R_Learning algorithm.
+ */
 class R_LearningOutput : public FiniteTDOutput
 {
 public:
-    R_LearningOutput(double alpha,
-                     double beta,
+    /*!
+     * Constructor.
+     * \param alpha the Q-function learning rate
+     * \param beta the average expected reward learning rate
+     * \param policyName the name of the policy used
+     * \param policyHPar the map of the hyperparameters of the policy
+     * \param Q the Q-table
+     * \param ro the average expected reward
+     */
+    R_LearningOutput(const std::string& alpha,
+                     const std::string& beta,
                      const std::string& policyName,
                      const hyperparameters_map& policyHPar,
                      const arma::mat& Q,
@@ -43,14 +55,33 @@ public:
     virtual void writeDecoratedData(std::ostream& os) override;
 
 private:
-    double beta;
+    std::string beta;
     double ro;
 };
 
+/*!
+ * This class implements the tabular R-learning algorithm.
+ * This algorithm is an off-policy temporal difference algorithm.
+ * Differently from Q-Learning, can learn properly the Q-function in the average reward case.
+ * Can only work on finite MDP, i.e. with both finite action and state space.
+ *
+ * References
+ * ==========
+ *
+ * [Schwartz. A reinforcement learning method for maximizing undiscounted rewards](http://sulinux.stanford.edu/cs/robotics/pub/schwartz/ml93.ps.gz)
+ *
+ * [Sutton, Barto. Reinforcement Learning: An Introduction (chapter 6.7)](https://webdocs.cs.ualberta.ca/~sutton/book/ebook/node67.html)
+ */
 class R_Learning: public FiniteTD
 {
 public:
-    R_Learning(ActionValuePolicy<FiniteState>& policy);
+    /*!
+     * Constructor.
+     * \param policy the policy to be used by the algorithm
+     * \param alpha the Q-function learning rate to be used by the algorithm
+     * \param beta the average expected reward learning rate to be used by the algorithm
+     */
+    R_Learning(ActionValuePolicy<FiniteState>& policy, LearningRate& alpha, LearningRate& beta);
     virtual void initEpisode(const FiniteState& state, FiniteAction& action) override;
     virtual void sampleAction(const FiniteState& state, FiniteAction& action) override;
     virtual void step(const Reward& reward, const FiniteState& nextState,
@@ -59,7 +90,7 @@ public:
 
     inline virtual AgentOutputData* getAgentOutputDataEnd() override
     {
-        return new R_LearningOutput(alpha, beta, policy.getPolicyName(),
+        return new R_LearningOutput(alpha.print(), beta.print(), policy.getPolicyName(),
                                     policy.getPolicyHyperparameters(), Q, ro);
     }
 
@@ -68,7 +99,7 @@ public:
 
 
 private:
-    double beta;
+    LearningRate& beta;
 
     double ro;
 

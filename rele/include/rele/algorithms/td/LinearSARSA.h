@@ -30,31 +30,40 @@
 namespace ReLe
 {
 
-/**
- * http://jmlr.org/proceedings/papers/v32/seijen14.pdf
+/*!
+ * This class implements the linear SARSA algorithm.
+ * This algorithm is an on-policy temporal difference algorithm.
+ * Can only work on Dense MDP, i.e. with finite action and dense state space.
+ *
+ * References
+ * ==========
+ *
+ * [Seijen, Sutton. True Online TD(lambda)](http://jmlr.org/proceedings/papers/v32/seijen14.pdf)
  */
 class LinearGradientSARSA: public LinearTD
 {
 public:
-    LinearGradientSARSA(ActionValuePolicy<DenseState>& policy, Features& phi);
+    /*!
+     * Constructor.
+     * \param phi the features to be used for linear approximation of the state space
+     * \param policy the policy to be used by the algorithm
+     * \param alpha the learning rate to be used by the algorithm
+     */
+    LinearGradientSARSA(Features& phi, ActionValuePolicy<DenseState>& policy, LearningRateDense& alpha);
     virtual void initEpisode(const DenseState& state, FiniteAction& action) override;
     virtual void sampleAction(const DenseState& state, FiniteAction& action) override;
     virtual void step(const Reward& reward, const DenseState& nextState,
                       FiniteAction& action) override;
     virtual void endEpisode(const Reward& reward) override;
 
+    void setLambda(double lambda);
+
     virtual ~LinearGradientSARSA();
 
-    void setReplacingTraces(bool val)
-    {
-        useReplacingTraces = val;
-    }
-
 private:
+    arma::vec prevQxu;
     arma::vec eligibility;
     double lambda;
-    bool useReplacingTraces;
-
 };
 
 }

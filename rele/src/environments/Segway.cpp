@@ -38,24 +38,25 @@ void SegwaySettings::defaultSettings(SegwaySettings& settings)
 {
     //Environment Parameters
     settings.gamma = 0.99;
-    settings.continuosStateDim = 3;
-    settings.continuosActionDim = 1;
-    settings.rewardDim = 1;
-    settings.finiteStateDim = 0;
-    settings.finiteActionDim = 0;
+    settings.stateDimensionality = 3;
+    settings.actionDimensionality = 1;
+    settings.rewardDimensionality = 1;
+    settings.statesNumber = 0;
+    settings.actionsNumber = 0;
     settings.isFiniteHorizon = false;
     settings.isAverageReward = false;
     settings.isEpisodic = true;
     settings.horizon = 300;
 
-    //UWV Parameters
+    //TODO [MINOR] change default parameters
+    //Segway Parameters
     settings.Mp = 10;
     settings.Mr = 15;
-    settings.Ip = 19; //TODO change
-    settings.Ir = 19; //TODO change
-    settings.l = 1.2; //m
-    settings.r = 0.2; //TODO change
-    settings.dt = 0.03; //s
+    settings.Ip = 19;
+    settings.Ir = 19;
+    settings.l = 1.2;
+    settings.r = 0.2;
+    settings.dt = 0.03;
 }
 
 SegwaySettings::~SegwaySettings()
@@ -65,12 +66,12 @@ SegwaySettings::~SegwaySettings()
 
 void SegwaySettings::WriteToStream(std::ostream& out) const
 {
-    //TODO implement
+    //TODO [SERIALIZATION] implement
 }
 
 void SegwaySettings::ReadFromStream(std::istream& in)
 {
-    //TODO implement
+    //TODO [SERIALIZATION] implement
 }
 
 Segway::SegwayOde::SegwayOde(SegwaySettings& config) :
@@ -118,14 +119,14 @@ Segway::Segway()
       controlled_stepper (make_controlled< error_stepper_type >( 1.0e-6 , 1.0e-6 ))
 {
     segwayConfig = static_cast<SegwaySettings*>(settings);
-    currentState.set_size(segwayConfig->continuosStateDim);
+    currentState.set_size(segwayConfig->stateDimensionality);
 }
 
 Segway::Segway(SegwaySettings& config)
     : ContinuousMDP(&config), cleanConfig(false), segwayConfig(&config), segwayode(*segwayConfig),
       controlled_stepper (make_controlled< error_stepper_type >( 1.0e-6 , 1.0e-6 ))
 {
-    currentState.set_size(this->getSettings().continuosStateDim);
+    currentState.set_size(this->getSettings().stateDimensionality);
 }
 
 void Segway::step(const DenseAction& action, DenseState& nextState, Reward& reward)

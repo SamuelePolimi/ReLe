@@ -25,7 +25,7 @@
 #include "rele/algorithms/policy_search/REPS/REPS.h"
 #include "rele/statistics/DifferentiableNormals.h"
 #include "rele/core/Core.h"
-#include "rele/policy/parametric/differentiable/GibbsPolicy.h"
+#include "rele/policy/parametric/differentiable/GenericGibbsPolicy.h"
 #include "rele/approximators/BasisFunctions.h"
 #include "rele/approximators/basis/PolynomialFunction.h"
 #include "rele/approximators/basis/ConditionBasedFunction.h"
@@ -222,7 +222,7 @@ int main(int argc, char *argv[])
 
     DeepSeaTreasure mdp;
     vector<FiniteAction> actions;
-    for (int i = 0; i < mdp.getSettings().finiteActionDim; ++i)
+    for (int i = 0; i < mdp.getSettings().actionsNumber; ++i)
         actions.push_back(FiniteAction(i));
 
     //--- policy setup
@@ -250,8 +250,9 @@ int main(int argc, char *argv[])
     }
 
     DenseFeatures phi(bfs);
+    LinearApproximator reg(phi);
 
-    ParametricGibbsPolicy<DenseState> policy(actions, phi, 1.0/1e8);
+    GenericParametricGibbsPolicy<DenseState> policy(actions, reg, 1.0/1e8);
     //---
 
     //--- distribution setup
