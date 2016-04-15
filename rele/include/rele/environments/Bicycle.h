@@ -53,17 +53,18 @@ public:
                       Reward& reward) override;
     virtual void getInitialState(DenseState& state) override;
 
+
     ConfigurationsLabel s0type;
 protected:
     bool isAtGoal();
-
+    void resetState();
     double vector_angle(vec u, vec v);
 
     double const reward_fall = -1.0;
     double const reward_goal = 0.01;
     double const goal_rsqrd = 1000.0;
     	//# Square of the radius around the goal (10m)^2
-    double navigate = false;
+    double navigate = true;
     double const reward_shaping = 0.001;
     double goal_loc_x = 1000;
     double goal_loc_y = 0;
@@ -96,10 +97,10 @@ protected:
     double x_f = 0, y_f = 0, x_b = 0, y_b = 0, psi = 0;
 
     mat state_range = {{-M_PI * 12.0/180.0, M_PI * 12.0/180.0},
-                            {-M_PI * 2.0/180.0, M_PI * 2.0/180.0},
-                            {-M_PI, M_PI},
-                            {-M_PI * 80.0/180.0, M_PI * 80.0/180.0},
-                            {-M_PI * 2.0/180.0, M_PI * 2.0/180.0}};
+                       {-M_PI * 2.0/180.0, 	M_PI * 2.0/180.0},
+                       {-M_PI, 				M_PI},
+                       {-M_PI * 80.0/180.0, M_PI * 80.0/180.0},
+                       {-M_PI * 2.0/180.0, M_PI * 2.0/180.0}};
 
 };
 

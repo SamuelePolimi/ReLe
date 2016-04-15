@@ -35,7 +35,7 @@ Bicycle::Bicycle(ConfigurationsLabel label) :
     //Klein's articles
     DenseMDP(5, 9, 1, false, true, 0.95, 1000), s0type(label)
 {
-
+		//state_range = state_range.t();
 	}
 
 void Bicycle::step(const FiniteAction& action,
@@ -67,7 +67,7 @@ void Bicycle::step(const FiniteAction& action,
 
         double theta_ddot = (T - Inertia_dv * sigma_dot * currentState[omega_dot]) / Inertia_dl;
 
-        double df = (delta_time / float(10)); //10 = simStep
+        double df = (delta_time / 10.0); //10.0 = simStep
         currentState[omega_dot] += df * currentState[omega_ddot];
         currentState[omega] += df * currentState[omega_dot];
         currentState[theta_dot] += df * theta_ddot;
@@ -75,10 +75,10 @@ void Bicycle::step(const FiniteAction& action,
 
         //Handle bar limits (80 deg.)
 
-        if(currentState[theta]<state_range[3,0])
-            currentState[theta] = state_range[3,0];
-        if(currentState[theta]<state_range[3,1])
-            currentState[theta] = state_range[3,1];
+        if(currentState[theta]<state_range(3,0))
+            currentState[theta] = state_range(3,0);
+        if(currentState[theta]>state_range(3,1))
+            currentState[theta] = state_range(3,1);
 
         // Update position (x,y) of tires
         double front_term = psi + currentState[theta] + copysign(1.0,psi + currentState[theta])* asin(v * df / (2.*r_f));
@@ -105,24 +105,28 @@ void Bicycle::step(const FiniteAction& action,
 
     }
 
-    nextState = currentState;
-
-    if(abs(currentState[omega]) > state_range[0,1]){ // Bicycle fell over
+    double val = currentState[omega];
+    double delta = state_range(0,1);
+    if(abs(val) > state_range(0,1)){ // Bicycle fell over
                 //return -1.0, True
     	reward = {-1.0};
     	currentState.setAbsorbing();
+    	//resetState();
     }else if(isAtGoal()){
     	reward = {reward_goal};
 		currentState.setAbsorbing();
+    	//resetState();
     }else if (!navigate)
         reward = {reward_shaping};
     else{
-    	mat g_l = Row<double>({goal_loc_x,goal_loc_y});
-    	mat x = Row<double>({x_f-x_b, y_f-y_b});
+    	vec g_l ={goal_loc_x,goal_loc_y};
+    	vec x = {x_f-x_b, y_f-y_b};
     	double goal_angle = vector_angle(g_l, x) * M_PI / 180.0;
         reward = {(4.0 - goal_angle*goal_angle) * reward_shaping};
-    }
 
+    }
+    //reward = {reward[0]*10};
+    nextState = currentState;
 }
 
 
@@ -136,21 +140,27 @@ bool Bicycle::isAtGoal(){
 }
 
 double Bicycle::vector_angle(vec u, vec v){
-	double x =acos(dot(u.t(),  v));
-    return x/(norm(u)*norm(v))*180.0/M_PI;
+    return (acos(dot(u,  v)/(norm(u)*norm(v))))*180.0/M_PI;
 }
 
-void Bicycle::getInitialState(DenseState& state){
-	state[omega] = 0;
-	state[omega_dot] = 0;
-	state[omega_ddot] = 0;
-	state[theta] = 0;
-	state[theta_dot] = 0;
+void Bicycle::resetState(){
 	x_f = 0;
 	y_f = 0;
 	x_b = 0;
-    y_b = l;
-    psi =  atan((y_f-x_f)/(y_b - x_b));
+	y_b = l;
+	psi =  atan((y_f-x_f)/(y_b - x_b));
+}
+
+void Bicycle::getInitialState(DenseState& state){
+
+	currentState[omega] = 0;
+	currentState[omega_dot] = 0;
+	currentState[omega_ddot] = 0;
+	currentState[theta] = 0;
+	currentState[theta_dot] = 0;
+	resetState();
+    currentState.setAbsorbing(false);
+    state=currentState;
 }
 }
 

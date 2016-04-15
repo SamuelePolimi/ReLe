@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
     policy.setEpsilon(0.05);
     ConstantLearningRateDense alpha(0.1);
     LinearGradientSARSA agent(phi, policy, alpha);
-    agent.setLambda(0.8);
+    agent.setLambda(0);
 
     FileManager fm("mc", "linearSarsa");
     fm.createDir();
